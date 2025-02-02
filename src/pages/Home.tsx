@@ -1,7 +1,17 @@
+import Gallery from "../features/Gallery"
+import SearchInput from "../ui/SearchInput"
 
-function Home() {
+interface HomeProps {
+query: string;
+setQuery: React.Dispatch<React.SetStateAction<string>>;
+}
+
+function Home({query, setQuery}: HomeProps) {
   return (
-    <div>Home</div>
+    <>
+      <SearchInput query={query} setQuery={setQuery} />
+      <Gallery query={query}/>
+    </>
   )
 }
 
