@@ -1,6 +1,8 @@
+import { useState } from "react";
+import { SearchResult} from "../type";
 import Gallery from "../features/Gallery"
 import SearchInput from "../ui/SearchInput"
-import { SearchResult } from "../type";
+import Modal from "../ui/Modal";
 
 interface HomeProps {
   query: string;
@@ -17,10 +19,25 @@ interface HomeProps {
 }
 
 function Home({query, setQuery, photos, setPhotos, page, setPage, loading, setLoading, hasMore, setHasMore, fetchPhotos}: HomeProps) {
+  const [selectedPhoto, setSelectedPhoto] = useState<SearchResult | null>(null);
+  
   return (
     <>
       <SearchInput query={query} setQuery={setQuery} />
-      <Gallery query={query} photos={photos} setPhotos={setPhotos} page={page} setPage={setPage} loading={loading} setLoading={setLoading} hasMore={hasMore} setHasMore={setHasMore} fetchPhotos={fetchPhotos}/>
+      <Gallery 
+        query={query} 
+        photos={photos} 
+        setPhotos={setPhotos} 
+        page={page} 
+        setPage={setPage} 
+        loading={loading} 
+        setLoading={setLoading} 
+        hasMore={hasMore} 
+        setHasMore={setHasMore} 
+        fetchPhotos={fetchPhotos} 
+        onPhotoClick={setSelectedPhoto} 
+      />
+      <Modal photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
     </>
   )
 }

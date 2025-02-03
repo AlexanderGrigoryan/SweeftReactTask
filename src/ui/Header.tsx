@@ -4,7 +4,7 @@ import MainNav from './MainNav'
 function Header() {
   return (
     <StyledHeader>
-        <MainNav/>
+      <MainNav/>
     </StyledHeader>
   )
 }

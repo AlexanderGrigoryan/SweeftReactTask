@@ -1,13 +1,13 @@
 import { Outlet } from "react-router"
-import Header from "./Header"
 import styled from "styled-components"
+import Header from "./Header"
 
 function AppLayout() {
   return (
     <div>
         <Header/>
         <Main>
-            <Outlet/>
+          <Outlet/>
         </Main>
     </div>
   )

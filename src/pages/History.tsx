@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { SearchResult } from "../type";
-import Button from "../ui/Button"
 import styled from "styled-components";
+import Button from "../ui/Button"
 import GalleryWrapper from "../features/GalleryWrapper";
 import Spinner from "../ui/Spinner";
+import Modal from "../ui/Modal";
 
 interface HistoryProps {
   query: string;
@@ -23,6 +24,8 @@ function History({query, setQuery, photos, setPhotos, page,  setPage, loading, s
   const [history] = useState<string[]>(
     () => JSON.parse(localStorage.getItem("searchHistory") || "[]")
   );
+
+  const [selectedPhoto, setSelectedPhoto] = useState<SearchResult | null>(null);
 
    useEffect(() => {
     setPhotos([]);
@@ -76,11 +79,12 @@ function History({query, setQuery, photos, setPhotos, page,  setPage, loading, s
       <GalleryWrapper>
           {loading && <Spinner/>}
               {photos.map((photo) => (
-                <li key={photo.id}>
+                <li key={photo.id} onClick={() => setSelectedPhoto(photo)}>
                   <StyledImage src={photo.urls.regular} alt={photo.alt_description} />
                 </li>
               ))}
         </GalleryWrapper>
+        <Modal photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
     </>
   )
 }
@@ -96,4 +100,10 @@ const FlexedDiv = styled.div`
 const StyledImage = styled.img`
 width: 300px;
 height: 200px;
+cursor: pointer;
+  transition: transform 0.3s ease-in-out;
+
+  &:hover {
+    transform: scale(1.1);
+  }
 `

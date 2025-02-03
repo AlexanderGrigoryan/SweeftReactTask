@@ -1,14 +1,9 @@
 import React, { useCallback, useEffect} from "react";
 import { useDebounce } from "../hooks/useDebounce"; // Импортируем хук
+import { SearchResult } from "../type";
 import styled from "styled-components";
 import GalleryWrapper from "./GalleryWrapper";
 import Spinner from "../ui/Spinner";
-
-interface SearchResult {
-  id: string;
-  alt_description: string;
-  urls: { regular: string };
-}
 
 interface GalleryProps {
   query: string;
@@ -21,10 +16,11 @@ interface GalleryProps {
   hasMore: boolean;
   setHasMore: React.Dispatch<React.SetStateAction<boolean>>;
   fetchPhotos: (query: string, page: number) => Promise<SearchResult[]>;
+  onPhotoClick: (photo: SearchResult) => void;
 }
 
 const Gallery: React.FC<GalleryProps> = ({
-  query, photos, setPhotos, page, setPage, loading, setLoading, hasMore, setHasMore, fetchPhotos
+  query, photos, setPhotos, page, setPage, loading, setLoading, hasMore, setHasMore, fetchPhotos, onPhotoClick
 }) => {
   const debouncedQuery = useDebounce(query, 700); 
 
@@ -88,7 +84,7 @@ const Gallery: React.FC<GalleryProps> = ({
     <>
       <GalleryWrapper>
         {photos.map((photo) => (
-          <div key={photo.id}>
+          <div key={photo.id} onClick={() => onPhotoClick(photo)}>
             <StyledImage src={photo.urls.regular} alt={photo.alt_description} />
           </div>
         ))}
@@ -103,4 +99,10 @@ export default Gallery;
 const StyledImage = styled.img`
 width: 300px;
 height: 200px;
+cursor: pointer;
+  transition: transform 0.3s ease-in-out;
+
+  &:hover {
+    transform: scale(1.1);
+  }
 `
