@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useCallback, useEffect} from "react";
+import { useDebounce } from "../hooks/useDebounce"; // Импортируем хук
 import styled from "styled-components";
 import GalleryWrapper from "./GalleryWrapper";
-import Spinner from "../ui/Spinner"
+import Spinner from "../ui/Spinner";
 
 interface SearchResult {
   id: string;
@@ -12,31 +12,29 @@ interface SearchResult {
 
 interface GalleryProps {
   query: string;
+  photos: SearchResult[];
+  setPhotos: React.Dispatch<React.SetStateAction<SearchResult[]>>;
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  loading: boolean;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  hasMore: boolean;
+  setHasMore: React.Dispatch<React.SetStateAction<boolean>>;
+  fetchPhotos: (query: string, page: number) => Promise<SearchResult[]>;
 }
 
-const API_URL = "https://api.unsplash.com/photos";
-const SEARCH_URL = "https://api.unsplash.com/search/photos";
-const API_KEY = import.meta.env.VITE_API_KEY;
+const Gallery: React.FC<GalleryProps> = ({
+  query, photos, setPhotos, page, setPage, loading, setLoading, hasMore, setHasMore, fetchPhotos
+}) => {
+  const debouncedQuery = useDebounce(query, 700); 
 
-const fetchPhotos = async (query: string, page: number): Promise<SearchResult[]> => {
-  try {
-    const url = query
-      ? `${SEARCH_URL}?query=${query}&page=${page}&per_page=20&client_id=${API_KEY}`
-      : `${API_URL}?page=1&per_page=20&order_by=popular&client_id=${API_KEY}`;
-    
-    const { data } = await axios.get<{ results?: SearchResult[], total?: number }>(url);
-    return query ? data.results || [] : (Array.isArray(data) ? data : []);
-  } catch (error) {
-    console.error("Ошибка загрузки данных:", error);
-    return [];
-  }
-};
-
-const Gallery: React.FC<GalleryProps> = ({query}) => {
-  const [photos, setPhotos] = useState<SearchResult[]>([]);
-  const [page, setPage] = useState<number>(1);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [hasMore, setHasMore] = useState<boolean>(false);
+  const saveSearchQuery = (searchQuery: string) => {
+    const history: string[] = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+    if (!history.some(item => item.toLowerCase() === searchQuery.toLowerCase())) {
+      const updatedHistory = [searchQuery, ...history].slice(0, 100); 
+      localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
+    }
+  };
 
   useEffect(() => {
     const loadInitialPhotos = async () => {
@@ -46,45 +44,45 @@ const Gallery: React.FC<GalleryProps> = ({query}) => {
       setLoading(false);
     };
     loadInitialPhotos();
-  }, []);
+  }, [fetchPhotos, setLoading, setPhotos]);
 
   useEffect(() => {
-    if (query) {
+    if (debouncedQuery) {
       const searchPhotos = async () => {
         setLoading(true);
-        const results = await fetchPhotos(query, 1);
+        const results = await fetchPhotos(debouncedQuery, 1);
         setPhotos(results);
         setPage(2);
         setHasMore(results.length > 0);
         setLoading(false);
+        saveSearchQuery(debouncedQuery);
       };
       searchPhotos();
     }
-  }, [query]);
+  }, [debouncedQuery, setHasMore, fetchPhotos, setLoading, setPage, setPhotos]);
 
-  const loadMore = async () => {
-    if (!hasMore || loading || !query) return;
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loading || !debouncedQuery) return;
+  
     setLoading(true);
-    const results = await fetchPhotos(query, page);
+    const results = await fetchPhotos(debouncedQuery, page);
+  
     setPhotos((prev) => [...prev, ...results.filter((photo) => !prev.some(p => p.id === photo.id))]);
     setPage((prevPage) => prevPage + 1);
     setHasMore(results.length > 0);
     setLoading(false);
-  };
-
+  }, [hasMore, loading, debouncedQuery, page, fetchPhotos, setPhotos, setPage, setHasMore, setLoading]);
+  
   useEffect(() => {
-    if (!query) return;
+    if (!debouncedQuery) return;
     const handleScroll = () => {
-      if (
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
-        !loading
-      ) {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 && !loading) {
         loadMore();
       }
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [query, page, loading]);
+  }, [debouncedQuery, page, loading, loadMore]);
 
   return (
     <>
@@ -94,7 +92,7 @@ const Gallery: React.FC<GalleryProps> = ({query}) => {
             <StyledImage src={photo.urls.regular} alt={photo.alt_description} />
           </div>
         ))}
-    </GalleryWrapper>
+      </GalleryWrapper>
       {loading && <Spinner/>}
     </>
   );
