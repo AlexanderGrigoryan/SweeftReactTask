@@ -95,6 +95,7 @@ const FlexedDiv = styled.div`
   display: flex;
   gap: 10px;
   margin: 20px 0;
+  flex-wrap: wrap;
 `
 
 const StyledImage = styled.img`
